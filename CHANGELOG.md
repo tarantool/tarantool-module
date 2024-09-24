@@ -8,6 +8,7 @@
 ### Changed
 
 ### Fixed
+- Error deleting sequence after calling next().
 
 ### Deprecated
 
