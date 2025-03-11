@@ -133,6 +133,8 @@ crate::define_str_enum! {
         /// for more details.
         Vinyl = "vinyl",
 
+        Memcs = "memcs",
+
         /// Spaces with "sysview" engine type represent read-only views into a
         /// system space.
         ///
@@ -331,6 +333,16 @@ impl Field {
         interval(FieldType::Interval)
         array(FieldType::Array)
         map(FieldType::Map)
+        int8(FieldType::Int8)
+        uint8(FieldType::UInt8)
+        int16(FieldType::Int16)
+        uint16(FieldType::UInt16)
+        int32(FieldType::Int32)
+        uint32(FieldType::UInt32)
+        int64(FieldType::Int64)
+        uint64(FieldType::UInt64)
+        float32(FieldType::Float32)
+        float64(FieldType::Float64)
     }
 }
 
@@ -360,6 +372,16 @@ crate::define_str_enum! {
         Interval  = "interval",
         Array     = "array",
         Map       = "map",
+        Int8      = "int8",
+        UInt8     = "uint8",
+        Int16     = "int16",
+        UInt16    = "uint16",
+        Int32     = "int32",
+        UInt32    = "uint32",
+        Int64     = "int64",
+        UInt64    = "uint64",
+        Float32   = "float32",
+        Float64   = "float64",
     }
 }
 
