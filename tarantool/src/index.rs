@@ -371,6 +371,17 @@ crate::define_str_enum! {
     }
 }
 
+crate::define_str_enum! {
+    #![coerce_from_str]
+    /// Order of data in index.
+    #[derive(Default)]
+    pub enum SortOrder {
+        #[default]
+        Asc  = "asc",
+        Desc = "desc",
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // IndexPart
 ////////////////////////////////////////////////////////////////////////////////
@@ -392,6 +403,8 @@ pub struct Part {
     pub is_nullable: Option<bool>,
     #[serde(default)]
     pub path: Option<String>,
+    #[serde(default)]
+    pub sort_order: Option<SortOrder>,
 }
 
 macro_rules! define_setters {
@@ -415,6 +428,7 @@ impl Part {
             collation: None,
             is_nullable: None,
             path: None,
+            sort_order: None,
         }
     }
 
@@ -423,6 +437,7 @@ impl Part {
         collation(collation: impl Into<String>)
         is_nullable(is_nullable: bool)
         path(path: impl Into<String>)
+        sort_order(sort_order: SortOrder)
     }
 
     #[inline(always)]
