@@ -10,9 +10,9 @@ use crate::error::{Error, TarantoolError};
 use crate::ffi::tarantool as ffi;
 use crate::index::{Index, IndexIterator, IteratorType};
 use crate::tuple::{Encode, ToTupleBuffer, Tuple, TupleBuffer};
-use crate::unwrap_or;
 use crate::util::Value;
 use crate::{msgpack, tuple_from_box_api};
+use crate::{transaction, unwrap_or};
 use serde::{Deserialize, Serialize};
 use serde_json::Map;
 use std::borrow::Cow;
@@ -530,6 +530,44 @@ impl Space {
     #[inline(always)]
     pub fn create(name: &str, opts: &SpaceCreateOptions) -> Result<Space, Error> {
         crate::schema::space::create_space(name, opts)
+    }
+
+    /// Alter a space.
+    ///
+    /// Alter a space by changing space description stored in [`Metadata`] struct.
+    ///
+    /// - `opts` - New metadata for the space (see [`Metadata`] struct).
+    ///
+    /// **NOTE:** Like `create()`, this function may abort the current transaction
+    /// on failure. Ensure your error handling accounts for this behavior.
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - Metadata replacement fails.
+    /// - Transaction operations fail.
+    pub fn alter(&self, opts: &Metadata) -> Result<(), Error> {
+        let nested_transaction = transaction::is_in_transaction();
+        if !nested_transaction {
+            transaction::begin()?;
+        }
+
+        let res = (|| -> Result<_, Error> {
+            let sys_space = SystemSpace::Space.as_space();
+            sys_space.replace(opts)?;
+
+            Ok(())
+        })();
+
+        if let Err(e) = res {
+            transaction::rollback()?;
+            return Err(e);
+        }
+
+        if !nested_transaction {
+            transaction::commit()?;
+        }
+
+        Ok(())
     }
 
     /// Drop a space.
