@@ -1,13 +1,16 @@
 # Change Log
 
-
 # [?.?.?] Unreleased
 
 ### Added
 
+- Added `alter` space support. Allows to altering existing spaces.
+- Support for index ordering.
+
 ### Changed
 
 ### Fixed
+
 - Error deleting sequence after calling next().
 
 ### Deprecated
@@ -21,8 +24,6 @@
 ### Fixed (picodata)
 
 ### Breaking changes (picodata)
-
-
 
 # [5.0.0] Aug 06 2024
 
@@ -89,7 +90,7 @@
 - `tarantool::set_error!` macro will now use the caller's location, so if it's
   called from a function marked `#[track_caller]`, the log message will contain
   that function's call site, instead of the location of the macro call itself.
-- `Decimal` type is now backed by builtin tarantool decimal implementation. 
+- `Decimal` type is now backed by builtin tarantool decimal implementation.
   The only expected difference is slight change in formatting (lack of
   scientific notation).
 - datetime `from_ffi_dt` and `as_ffi_dt` functions now public
@@ -187,12 +188,14 @@
   **experimental** rust allocated implementation of tuple virtual table.
 
 ### Changed (picodata)
+
 - `Tuple::decode` & `ToTupleBuffer` implementation for `Tuple` is now a bit more
   efficient because one redundant tuple data copy is removed.
 
 ### Fixed (picodata)
 
 ### Breaking changes (picodata)
+
 - SQL module was totally refactored: all its public structures functions and FFIs have
   been changed.
 
@@ -265,7 +268,7 @@
 
 - `define_str_enum` will no longer produce warning "`&` without an explicit
   lifetime name cannot be used here". For more information, see
-  https://github.com/rust-lang/rust/issues/115010.
+  <https://github.com/rust-lang/rust/issues/115010>.
 - `#[tarantool::test]` declares a special static variable which is usually
   invisible to the users, but previously it would have a not so unique name
   which would sometimes lead to name conflicts with user-defined items.
