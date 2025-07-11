@@ -9,6 +9,8 @@
 
 ### Changed
 
+- Make last error available outside of tx thread.
+
 ### Fixed
 
 - Error deleting sequence after calling next().

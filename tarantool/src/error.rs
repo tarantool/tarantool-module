@@ -311,8 +311,6 @@ impl BoxError {
     ///
     /// # Safety
     /// The pointer must point to a valid struct of type `BoxError`.
-    ///
-    /// Also must only be called from the `tx` thread.
     pub unsafe fn from_ptr(error_ptr: NonNull<ffi::BoxError>) -> Self {
         let code = ffi::box_error_code(error_ptr.as_ptr());
 
@@ -322,20 +320,13 @@ impl BoxError {
         let error_type = CStr::from_ptr(ffi::box_error_type(error_ptr.as_ptr()));
         let error_type = error_type.to_string_lossy().into_owned().into_boxed_str();
 
-        let mut file = None;
-        let mut line = None;
-        if let Some((f, l)) = error_get_file_line(error_ptr.as_ptr()) {
-            file = Some(f.into());
-            line = Some(l);
-        }
-
         Self {
             code,
             message: Some(message),
             error_type: Some(error_type),
             errno: None,
-            file,
-            line,
+            file: None,
+            line: None,
             fields: HashMap::default(),
             cause: None,
         }
@@ -431,49 +422,6 @@ impl From<BoxError> for Error {
     fn from(error: BoxError) -> Self {
         Error::Tarantool(error)
     }
-}
-
-/// # Safety
-/// Only safe to be called from `tx` thread. Also `ptr` must point at a valid
-/// instance of `ffi::BoxError`.
-unsafe fn error_get_file_line(ptr: *const ffi::BoxError) -> Option<(String, u32)> {
-    #[derive(Clone, Copy)]
-    struct Failure;
-    static mut FIELD_OFFSETS: Option<std::result::Result<(u32, u32), Failure>> = None;
-
-    if FIELD_OFFSETS.is_none() {
-        let lua = crate::lua_state();
-        let res = lua.eval::<(u32, u32)>(
-            "ffi = require 'ffi'
-            return
-                ffi.offsetof('struct error', '_file'),
-                ffi.offsetof('struct error', '_line')",
-        );
-        let (file_ofs, line_ofs) = crate::unwrap_ok_or!(res,
-            Err(e) => {
-                crate::say_warn!("failed getting struct error type info: {e}");
-                FIELD_OFFSETS = Some(Err(Failure));
-                return None;
-            }
-        );
-        FIELD_OFFSETS = Some(Ok((file_ofs, line_ofs)));
-    }
-    let (file_ofs, line_ofs) = crate::unwrap_ok_or!(
-        FIELD_OFFSETS.expect("always Some at this point"),
-        Err(Failure) => {
-            return None;
-        }
-    );
-
-    let ptr = ptr.cast::<u8>();
-    // TODO: check that struct error::_file is an array of bytes via lua-jit's ffi.typeinfo
-    let file_ptr = ptr.add(file_ofs as _).cast::<std::ffi::c_char>();
-    let file = CStr::from_ptr(file_ptr).to_string_lossy().into_owned();
-    // TODO: check that struct error::_line has type u32 via lua-jit's ffi.typeinfo
-    let line_ptr = ptr.add(line_ofs as _).cast::<u32>();
-    let line = *line_ptr;
-
-    Some((file, line))
 }
 
 /// Sets the last tarantool error. The `file_line` specifies source location to
