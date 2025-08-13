@@ -228,12 +228,28 @@ pub enum SpaceType {
 #[deprecated = "Use `space::Field` instead"]
 pub type SpaceFieldFormat = Field;
 
+/// Extra parameters for parametric types like [`FieldType::Decimal32`] etc.
+#[derive(Clone, Debug, Serialize, Deserialize, msgpack::Encode, msgpack::Decode, PartialEq, Eq)]
+#[serde(untagged, rename_all = "snake_case")]
+#[encode(tarantool = "crate")]
+pub enum TypeParams {
+    /// Used by fixed point decimals.
+    Scale(i64),
+}
+
+impl Default for TypeParams {
+    fn default() -> Self {
+        Self::Scale(i64::MAX)
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, msgpack::Encode, msgpack::Decode, PartialEq, Eq)]
 #[encode(tarantool = "crate", as_map)]
 pub struct Field {
     pub name: String, // TODO(gmoshkin): &str
     #[serde(alias = "type")]
     pub field_type: FieldType,
+    pub type_params: TypeParams,
     pub is_nullable: bool,
 }
 
@@ -245,10 +261,12 @@ where
     fn from(args: (S, FieldType, IsNullable)) -> Self {
         let (name, field_type, is_nullable) = args;
         let name = name.into();
+        let type_params = TypeParams::default();
         let is_nullable = is_nullable.is_nullable();
         Self {
             name,
             field_type,
+            type_params,
             is_nullable,
         }
     }
@@ -262,10 +280,12 @@ where
     fn from(args: (S, FieldType)) -> Self {
         let (name, field_type) = args;
         let name = name.into();
+        let type_params = TypeParams::default();
         let is_nullable = false;
         Self {
             name,
             field_type,
+            type_params,
             is_nullable,
         }
     }
@@ -283,6 +303,7 @@ macro_rules! define_constructors {
                 Self {
                     name: name.into(),
                     field_type: $type,
+                    type_params: TypeParams::default(),
                     is_nullable: false,
                 }
             }
@@ -300,6 +321,7 @@ impl Field {
         Self {
             name: name.to_string(),
             field_type: ft,
+            type_params: TypeParams::default(),
             is_nullable: false,
         }
     }
@@ -314,6 +336,21 @@ impl Field {
     #[inline(always)]
     pub fn is_nullable(mut self, is_nullable: bool) -> Self {
         self.is_nullable = is_nullable;
+        self
+    }
+
+    /// Set the scale for the current field. Setting the scale explicitly
+    /// makes sense only if the field is a fixed point decimal. For other
+    /// fields it should keep the default value set by contructors. This
+    /// method captures `self` by value and returns it, so it should be
+    /// used in a builder fashion.
+    /// ```no_run
+    /// use tarantool::space::Field;
+    /// let f = Field::decimal128("middle name").with_scale(22);
+    /// ```
+    #[inline(always)]
+    pub fn with_scale(mut self, scale: i64) -> Self {
+        self.type_params = TypeParams::Scale(scale);
         self
     }
 
@@ -343,6 +380,10 @@ impl Field {
         uint64(FieldType::UInt64)
         float32(FieldType::Float32)
         float64(FieldType::Float64)
+        decimal32(FieldType::Decimal32)
+        decimal64(FieldType::Decimal64)
+        decimal128(FieldType::Decimal128)
+        decimal256(FieldType::Decimal256)
     }
 }
 
@@ -357,31 +398,35 @@ crate::define_str_enum! {
     #![coerce_from_str]
     /// Type of a field in the space format definition.
     pub enum FieldType {
-        Any       = "any",
-        Unsigned  = "unsigned",
-        String    = "string",
-        Number    = "number",
-        Double    = "double",
-        Integer   = "integer",
-        Boolean   = "boolean",
-        Varbinary = "varbinary",
-        Scalar    = "scalar",
-        Decimal   = "decimal",
-        Uuid      = "uuid",
-        Datetime  = "datetime",
-        Interval  = "interval",
-        Array     = "array",
-        Map       = "map",
-        Int8      = "int8",
-        UInt8     = "uint8",
-        Int16     = "int16",
-        UInt16    = "uint16",
-        Int32     = "int32",
-        UInt32    = "uint32",
-        Int64     = "int64",
-        UInt64    = "uint64",
-        Float32   = "float32",
-        Float64   = "float64",
+        Any        = "any",
+        Unsigned   = "unsigned",
+        String     = "string",
+        Number     = "number",
+        Double     = "double",
+        Integer    = "integer",
+        Boolean    = "boolean",
+        Varbinary  = "varbinary",
+        Scalar     = "scalar",
+        Decimal    = "decimal",
+        Uuid       = "uuid",
+        Datetime   = "datetime",
+        Interval   = "interval",
+        Array      = "array",
+        Map        = "map",
+        Int8       = "int8",
+        UInt8      = "uint8",
+        Int16      = "int16",
+        UInt16     = "uint16",
+        Int32      = "int32",
+        UInt32     = "uint32",
+        Int64      = "int64",
+        UInt64     = "uint64",
+        Float32    = "float32",
+        Float64    = "float64",
+        Decimal32  = "decimal32",
+        Decimal64  = "decimal64",
+        Decimal128 = "decimal128",
+        Decimal256 = "decimal256",
     }
 }
 

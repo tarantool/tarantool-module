@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use tarantool::index::{self, IndexOptions, IteratorType};
 use tarantool::sequence::Sequence;
 use tarantool::space::UpdateOps;
-use tarantool::space::{self, Field, Space, SystemSpace};
+use tarantool::space::{self, Field, Space, SystemSpace, TypeParams};
 use tarantool::space::{SpaceCreateOptions, SpaceEngineType, SpaceType};
 use tarantool::test::util::on_scope_exit;
 use tarantool::tuple::Tuple;
@@ -938,6 +938,7 @@ pub fn space_meta() {
             Field {
                 name: "f3".to_string(),
                 field_type: space::FieldType::String,
+                type_params: TypeParams::default(),
                 is_nullable: true,
             },
         ]),

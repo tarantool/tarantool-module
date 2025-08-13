@@ -124,6 +124,7 @@ impl<'a> From<&'a str> for NumOrStr {
 #[serde(untagged)]
 pub enum Value<'a> {
     Num(u32),
+    BigInt(i64),
     Double(f64),
     Str(Cow<'a, str>),
     Bool(bool),
@@ -133,6 +134,7 @@ impl std::hash::Hash for Value<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         match self {
             Self::Num(v) => v.hash(state),
+            Self::BigInt(v) => v.hash(state),
             Self::Double(v) => v.to_bits().hash(state),
             Self::Str(v) => v.hash(state),
             Self::Bool(v) => v.hash(state),
