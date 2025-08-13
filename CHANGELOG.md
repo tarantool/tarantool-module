@@ -6,6 +6,7 @@
 
 - Added `alter` space support. Allows to altering existing spaces.
 - Support for index ordering.
+- Fixed point decimal support.
 
 ### Changed
 

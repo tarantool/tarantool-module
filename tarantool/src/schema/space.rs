@@ -85,6 +85,12 @@ pub fn create_space(name: &str, opts: &SpaceCreateOptions) -> Result<Space, Erro
             IntoIterator::into_iter([
                 ("name".into(), Value::Str(f.name.as_str().into())),
                 ("type".into(), Value::Str(f.field_type.as_str().into())),
+                (
+                    "scale".into(),
+                    Value::BigInt(match f.type_params {
+                        space::TypeParams::Scale(s) => s,
+                    }),
+                ),
                 ("is_nullable".into(), Value::Bool(f.is_nullable)),
             ])
             .collect()
