@@ -425,6 +425,7 @@ fn run_tests(cfg: TestConfig) -> Result<bool, io::Error> {
                 r#box::min_max,
                 r#box::count,
                 r#box::extract_key,
+                r#box::sequence_create,
                 r#box::sequence_get_by_name,
                 r#box::sequence_iterate,
                 r#box::sequence_set,
