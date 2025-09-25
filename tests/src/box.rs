@@ -1,6 +1,7 @@
 use rand::Rng;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
+use tarantool::schema::sequence::{self, SequenceCreateOptions};
 
 use tarantool::index::{self, IndexOptions, IteratorType};
 use tarantool::sequence::Sequence;
@@ -733,20 +734,28 @@ pub fn truncate() {
     assert_eq!(space.len().unwrap(), 0_usize);
 }
 
+pub fn sequence_create() {
+    let seq =
+        sequence::create_sequence("test_create_seq", SequenceCreateOptions::default()).unwrap();
+    let found_seq = Sequence::find("test_create_seq").unwrap().unwrap();
+    assert_eq!(found_seq.id(), seq.id());
+    sequence::drop_sequence(seq.id()).unwrap();
+}
+
 pub fn sequence_get_by_name() {
     assert!(Sequence::find("test_seq").unwrap().is_some());
     assert!(Sequence::find("test_seq_invalid").unwrap().is_none());
 }
 
 pub fn sequence_iterate() {
-    let mut seq = Sequence::find("test_seq").unwrap().unwrap();
+    let seq = Sequence::find("test_seq").unwrap().unwrap();
     seq.reset().unwrap();
     assert_eq!(seq.next().unwrap(), 1);
     assert_eq!(seq.next().unwrap(), 2);
 }
 
 pub fn sequence_set() {
-    let mut seq = Sequence::find("test_seq").unwrap().unwrap();
+    let seq = Sequence::find("test_seq").unwrap().unwrap();
     seq.reset().unwrap();
     assert_eq!(seq.next().unwrap(), 1);
 
@@ -755,7 +764,7 @@ pub fn sequence_set() {
 }
 
 pub fn sequence_drop() {
-    let mut seq = Sequence::find("test_drop_seq").unwrap().unwrap();
+    let seq = Sequence::find("test_drop_seq").unwrap().unwrap();
     assert_eq!(seq.next().unwrap(), 1);
 
     tarantool::schema::sequence::drop_sequence(seq.id()).unwrap();
